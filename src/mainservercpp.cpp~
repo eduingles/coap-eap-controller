@@ -1,0 +1,44 @@
+#define __USE_POSIX 1
+
+#include <sys/select.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+
+#include <netdb.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <errno.h>
+#include <sys/time.h>
+#include <math.h>
+#include <unistd.h>
+#include <ctype.h>
+#include <dirent.h>
+#include <signal.h>
+
+
+//#include "mainservercpp.h"
+#include "cantcoap-master/nethelper.h"
+#include "cantcoap-master/cantcoap.h"
+#include "cantcoap-master/uthash.h"
+
+#include "state_machines/statemachine.h"
+#include "state_machines/paamachine.h"
+#include "state_machines/session.h"
+#include "panamessages.h"
+#include "panautils.h"
+#include "lalarmcpp.h"
+#include "prf_plus.h"
+
+
+
+
+int main(int argc, char * argv[]){
+
+
+	return 0;
+
+}

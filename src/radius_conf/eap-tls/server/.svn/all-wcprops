@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/p/openpana/code/!svn/ver/209/openpana/radius_conf/eap-tls/server
+END
+ca.pem
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/p/openpana/code/!svn/ver/209/openpana/radius_conf/eap-tls/server/ca.pem
+END
+server.pem
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/p/openpana/code/!svn/ver/209/openpana/radius_conf/eap-tls/server/server.pem
+END
+server.key
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/p/openpana/code/!svn/ver/209/openpana/radius_conf/eap-tls/server/server.key
+END

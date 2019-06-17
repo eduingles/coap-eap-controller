@@ -1,0 +1,11 @@
+These examples use libevent2 and tinydtls
+
+http://libevent.org/
+
+http://sourceforge.net/projects/tinydtls/
+
+libevent2 is used for efficient handling of incoming UDP packets on client and server.
+
+tinydtls provides basic authentication, encryption, and integrity.
+
+At present I only illustrate the use of a pre-shared key (TLS_PSK_WITH_AES_128_CCM_8).

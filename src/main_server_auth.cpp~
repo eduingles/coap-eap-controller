@@ -1,0 +1,118 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "mainserver.h"
+#include "lalarm.h"
+#include "state_machines/statemachine.h"
+#include "state_machines/paamachine.h"
+#include "state_machines/session.h"
+#include "panamessages.h"
+#include "state_machines/paamachine.h"
+#include "panautils.h"
+#include "lalarm.h"
+#include "prf_plus.h"
+#include "state_machines/coap_eap_session.h"
+
+	// Se supone que este se obtiene por panautils
+#include "cmac.h"
+
+#ifdef __cplusplus
+}
+#endif
+
+
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <ctype.h>
+#include <sys/select.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <sys/stat.h>
+#include <dirent.h>
+#include <errno.h>
+#include <signal.h>
+
+
+//CantCoap
+#include "cantcoap-master/nethelper.h"
+#include "cantcoap-master/cantcoap.h"
+#include "cantcoap-master/uthash.h"
+
+
+int check_mac(unsigned char *key, unsigned char *mac, CoapPDU *pdu) {
+
+	unsigned char zero[16] = {0};
+	unsigned char macacero[16] = {0};
+	unsigned char mactocheck[16] = {0};
+	unsigned char calculatedmac[16] = {0};
+
+	printf("AUTH KEY\n");
+	printf_hex((unsigned char *)key,16);
+
+	printf("PDU Before check\n");
+	printf_hex((unsigned char *)pdu->getPDUPointer(),pdu->getPDULength());
+
+	printf("MAC to check\n");
+	printf_hex(pdu->getAUTHPointer(),16);
+	printf_hex(mac,16);
+
+	memcpy(pdu->getAUTHPointer(),&zero,16);
+
+
+	printf("PDU with zero\n");
+	printf_hex((unsigned char *)pdu->getPDUPointer(),pdu->getPDULength());
+	int len = pdu->getPDULength();
+
+	unsigned char *mypdu = (unsigned char *)malloc((pdu->getPDULength())*sizeof(unsigned char));
+	mempcpy(mypdu,(unsigned char *)pdu->getPDUPointer(),len);
+
+	printf("Copy PDU with zero\n");
+	printf_hex(mypdu,len);
+
+
+	AES_CMAC(key,pdu->getPDUPointer(),pdu->getPDULength(), (unsigned char *)&calculatedmac);
+
+
+	printf("Print the mac\n");
+	printf_hex((unsigned char *)&calculatedmac,16);
+
+
+	if (memcmp(mac,calculatedmac,16)==0) return 1;
+	return 0;
+}
+
+
+
+
+void override_auth_option_pdu(unsigned char *key, CoapPDU *pdu) {
+	unsigned char buf[BUF_LEN] = {0};
+	unsigned char macacero[16] = {0};
+
+	AES_CMAC(key,pdu->getPDUPointer(),pdu->getPDULength(), (unsigned char *)&macacero);
+
+	printf("override_auth_option_pdu\n");
+	printf("pdu\n");
+	printf_hex(pdu->getPDUPointer(),pdu->getPDULength());
+
+	printf("macacero\n");
+	printf_hex((unsigned char *)&macacero,16);
+
+	memcpy(pdu->getPDUPointer()+pdu->getPDULength()-21,&macacero,16);
+	printf("pduwithmac\n");
+	printf_hex(pdu->getPDUPointer(),pdu->getPDULength());
+
+
+	printf("pdu after adding\n");
+	printf_hex(pdu->getPDUPointer(),pdu->getPDULength());
+
+
+}
+
+
+

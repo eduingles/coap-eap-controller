@@ -1,0 +1,11 @@
+#include "session.h"
+
+void Session::setMSK(uint8_t *msk, uint16_t len){
+	memcpy(&msk_key,&msk,len);
+	key_len = len;	
+}
+
+void Session::setAuthKey(uint8_t *authKey, uint16_t len){
+	memcpy(&auth_key,&authKey,16);
+}
+

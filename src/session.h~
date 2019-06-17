@@ -1,0 +1,88 @@
+#ifndef SESSION_H
+#define SESSION_H
+
+#define __USE_POSIX 1
+#include <sys/time.h>
+#include <math.h>
+
+
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <ctype.h>
+#include <sys/select.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <sys/stat.h>
+#include <dirent.h>
+#include <errno.h>
+#include <signal.h>
+#include <pthread.h>
+/*
+#include "panatiki/include.h"
+#include "panatiki/eap-peer.h"
+#include "panatiki/eap-psk.h"
+#include "cantcoap-master/nethelper.h"
+#include "cantcoap-master/cantcoap.h"
+#include "cantcoap-master/uthash.h"
+*/
+
+class Session{
+
+	public:
+
+	////////			  ////////
+	//		Class Methods		// 
+	////////			  ////////
+	
+	Session(){
+		pthread_mutex_init(&mutex, NULL);
+	}
+
+	void setMSK(uint8_t *msk, uint16_t len);
+
+	//void setAuthKey(uint8_t *authKey, uint16_t len);
+
+
+	private:
+
+	////////			  ////////
+	//		Class Properties	// 
+	////////			  ////////
+	
+	 pthread_mutex_t mutex;
+
+	 uint32_t session_id;
+	 uint16_t CURRENT_STATE;
+	 //Contains MSK key value when generated.
+	 uint8_t *msk_key;
+	 uint8_t *auth_key; //It will have 16 bytes
+	 //MSK key length.
+	 uint16_t key_len;
+
+
+};
+
+
+#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

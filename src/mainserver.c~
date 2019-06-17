@@ -1,0 +1,479 @@
+#include "mainserver.h"
+
+#include "state_machines/statemachine.h"
+#include "state_machines/paamachine.h"
+#include "state_machines/session.h"
+#include "state_machines/coap_eap_session.h"
+#include "panamessages.h"
+#include "state_machines/paamachine.h"
+#include "panautils.h"
+#include "lalarm.h"
+#include "prf_plus.h"
+
+
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <ctype.h>
+#include <sys/select.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <sys/stat.h>
+#include <dirent.h>
+#include <errno.h>
+#include <signal.h>
+
+// Cantcoap
+// helpers
+#include "cantcoap-master/nethelper.h"
+#include "cantcoap-master/dbg.h"
+
+// coap
+#include "cantcoap-master/cantcoap.h"
+
+
+
+//Global variables
+static bool fin = FALSE;
+
+/** Linked list of server's PANA sessions.*/
+struct coap_eap_ctx_list* list_coap_eap_sessions = NULL;
+struct coap_ctx_list* list_coap_ctx = NULL;
+
+/** Mutex associated to PANA sessions' list.*/
+pthread_mutex_t list_sessions_mutex;
+
+/** Linked list of server's tasks.*/
+struct task_list* list_tasks = NULL;
+/** Last task. */
+struct task_list* last_task = NULL;
+/** Mutex associated to tasks' list. */
+pthread_mutex_t list_tasks_mutex;
+
+/** Alarm's list. */
+//struct lalarm* list_alarms = NULL;
+struct lalarm_coap_eap* list_alarms_coap_eap = NULL;
+
+
+/** Semaphore used to wait for new tasks by workers. */
+sem_t got_task; 
+
+typedef unsigned char method_t;
+
+
+/** Rafa: CoAP context**/
+
+//    coap_context_t  *ctx_server;
+//    coap_context_t  *ctx_client;
+
+void signal_handler(int sig) {
+    printf("\nStopping server, signal: %d\n", sig);
+    fin = 1;
+}
+
+void printf_hex(unsigned char *hex, unsigned int l)
+{
+	int i;
+	if (hex != NULL){	
+	for (i=0; i < l; i++)
+		printf("%02x",hex[i]);
+
+	printf("\n");
+	}
+}
+
+void print_list_alarms(){
+	#ifdef DEBUG
+    struct lalarm* ptr = list_alarms_coap_eap;
+	
+	while (ptr != NULL) {
+		pana_debug("Showing session alarm id: %#X", ptr->coap_eap_session->session_id);
+		pana_debug("Showing alarm type: %#X", ptr->id);
+		ptr = ptr->sig;
+	}
+	#endif
+}
+
+
+void print_list_sessions(){
+	#ifdef DEBUG
+    struct pana_ctx_list* ptr = list_coap_eap_sessions;
+    // lock the mutex, to assure exclusive access to the list
+    pthread_mutex_lock(&list_sessions_mutex);
+
+	while (ptr != NULL) {
+		pana_debug("Showing session id: %#X", ptr->coap_eap_session->session_id);
+		ptr = ptr->next;
+	}
+    
+    // unlock mutex
+    pthread_mutex_unlock(&list_sessions_mutex);
+    #endif
+}
+
+
+
+int check_mac(unsigned char *key, unsigned char *mac, coap_pdu_t *pdu) {
+
+  unsigned char macacero[16] = {0};
+ 
+  AES_CMAC(key,pdu->hdr,pdu->length, &macacero);
+ 
+  if (memcmp(mac,macacero,16)==0) return 1;
+  return 0;
+}
+
+void add_task(task_function funcion, void * arg) {
+
+	int rc; // return code of pthreads functions.
+    // lock the mutex, to assure exclusive access to the list
+    rc = pthread_mutex_lock(&list_tasks_mutex);
+    
+    struct task_list * new_element; // A new element in the list
+
+    // create structure with new element
+    new_element = XMALLOC(struct task_list,1);
+    
+    new_element->use_function = funcion;
+    new_element->data = arg;
+    new_element->next = NULL;
+
+
+    /* add new session to the end of the list, updating list */
+    /* pointers as required */
+    if (list_tasks == NULL) { /* special case - list is empty */
+        list_tasks = new_element;
+        last_task = new_element;
+    }
+    else {
+        last_task->next = new_element;
+        last_task = last_task->next;
+    }
+
+	pana_debug("add_task: added task");	
+    /* unlock mutex */
+    rc = pthread_mutex_unlock(&list_tasks_mutex);
+    /* signal the condition variable - there's a new task to handle */
+    rc = sem_post(&got_task);
+}
+
+
+
+void add_coap_ctx(coap_context_t  *ctx) {
+    int rc; /* return code of pthreads functions.  */
+
+    struct coap_ctx_list * new_element;
+
+    /* create structure with new request */
+    new_element = XMALLOC(struct coap_ctx_list,1);
+    new_element->coap_eap_ctx = ctx;
+    new_element->next = NULL;
+
+    /* lock the mutex, to assure exclusive access to the list */
+    rc = pthread_mutex_lock(&list_sessions_mutex);
+
+    /* add new session to the end of the list, updating list */
+    /* pointers as required */
+    if (list_coap_ctx == NULL) { /* special case - list is empty */
+        list_coap_ctx = new_element;
+    } 
+    else {
+//		struct pana_ctx_list* ptr = new_element;
+        new_element->next = list_coap_ctx;
+        list_coap_ctx = new_element;
+    }
+    /* unlock mutex */
+    rc = pthread_mutex_unlock(&list_sessions_mutex);
+
+}
+
+void add_coap_eap_session(coap_eap_ctx * session) {
+    int rc; /* return code of pthreads functions.  */
+
+    struct coap_eap_ctx_list * new_element;
+
+    /* create structure with new request */
+    new_element = XMALLOC(struct coap_eap_ctx_list,1);
+    new_element->coap_eap_session = session;
+    new_element->next = NULL;
+
+    /* lock the mutex, to assure exclusive access to the list */
+    rc = pthread_mutex_lock(&list_sessions_mutex);
+
+    /* add new session to the end of the list, updating list */
+    /* pointers as required */
+    if (list_coap_eap_sessions == NULL) { /* special case - list is empty */
+        list_coap_eap_sessions = new_element;
+    } 
+    else {
+//		struct pana_ctx_list* ptr = new_element;
+        new_element->next = list_coap_eap_sessions;
+        list_coap_eap_sessions = new_element;
+    }
+
+	pana_debug("add_session: added CoAP EAP session: %#X",new_element->coap_eap_session->session_id);
+    /* unlock mutex */
+    rc = pthread_mutex_unlock(&list_sessions_mutex);
+
+}
+
+coap_eap_ctx* get_coap_eap_session(uint32_t id) {
+    int rc; /* return code of pthreads functions.  */
+
+    struct coap_eap_ctx_list* session = NULL;
+
+	pana_debug("Trying to get session of id: %d", id);
+    /* lock the mutex, to assure exclusive access to the list */
+    rc = pthread_mutex_lock(&list_sessions_mutex);
+
+    if (list_coap_eap_sessions != NULL) {
+        session = list_coap_eap_sessions;
+        while (session != NULL) {
+			pana_debug("Checking id: %d", session->coap_eap_session->session_id);
+            if (session->coap_eap_session->session_id == id) break;
+            session = session->next;
+        }
+    }
+    
+    /* unlock mutex */
+    rc = pthread_mutex_unlock(&list_sessions_mutex);
+
+    /* return the session to the caller. */
+    if (session == NULL) {
+		pana_debug("Session not found, id: %d", id);
+        return NULL;
+    }
+    return session->coap_eap_session;
+}
+
+void remove_coap_eap_session(uint32_t id) {
+    int rc;
+    
+    struct coap_eap_ctx_list* session = NULL;
+    struct coap_eap_ctx_list* anterior = NULL;
+    
+    pana_debug("Trying to delete session with id: %d", id);
+    // lock the mutex, to assure exclusive access to the list 
+    rc = pthread_mutex_lock(&list_sessions_mutex);
+
+    if (list_coap_eap_sessions != NULL) {
+        session = list_coap_eap_sessions;
+        //If the session is the first
+        if (session->coap_eap_session->session_id == id) {
+			pana_debug("Found and deleted session with id: %d", id);
+            list_coap_eap_sessions = list_coap_eap_sessions->next;
+            session->next=NULL;
+            //XFREE(session); //fixme: Cuidado al poner este free. Hay que verlo con el de remove_alarm (lalarm.c)
+            rc = pthread_mutex_unlock(&list_sessions_mutex);
+            return;
+        }
+        session = list_coap_eap_sessions->next;
+        anterior = list_coap_eap_sessions;
+        while (session != NULL) {
+            if (session->coap_eap_session->session_id == id) {
+                anterior->next = session->next;
+                session->next = NULL;
+                //XFREE(session); //fixme: Cuidado al poner este free. Hay que verlo con el de remove_alarm (lalarm.c)
+                break;
+            }
+            anterior = anterior->next;
+            session = session->next;
+        }
+    }
+
+    // unlock mutex 
+    rc = pthread_mutex_unlock(&list_sessions_mutex);
+
+}
+
+struct task_list* get_task() {
+    int rc; /* return code of pthreads functions.  */
+    
+    struct task_list* task = NULL;
+    
+    pana_debug("Trying to get a task.");
+    /* lock the mutex, to assure exclusive access to the list */
+    rc = pthread_mutex_lock(&list_tasks_mutex);
+
+    if (list_tasks != NULL) {
+        task = list_tasks; 
+        list_tasks = list_tasks->next;
+        task->next = NULL;
+    }
+
+
+    /* unlock mutex */
+    rc = pthread_mutex_unlock(&list_tasks_mutex);
+
+    /* return the task to the caller. */
+    if (task == NULL) {
+		pana_debug("Task not found");
+        return NULL;
+    }
+
+    return task;
+}
+
+void* handle_worker(void* data) {
+    int thread_id = *((int*) data); /* thread identifying number */
+    int rc; /* return code of pthreads functions.  */
+    struct task_list* a_task = NULL; /* pointer to a task. */
+    
+    pana_debug("thread '%d' as worker manager", thread_id);
+    pana_debug("Starting thread '%d'", thread_id);
+
+    /* lock the mutex, to access the requests list exclusively. */
+    sem_wait(&got_task);
+
+    /* do forever.... */
+    while (!fin) {
+		pana_debug("thread '%d' tries to get a task", thread_id);
+        if (list_tasks != NULL) { /* a request is pending */
+            a_task = get_task();
+        }
+
+        if (a_task) {
+
+            a_task->use_function(a_task->data);
+
+			//FIXME: PEDRO: Habría que liberar esta memoria. El problema está en que
+			//cuando la session llega al estado CLOSED, se libera su memoria, y al 
+			//intentar liberar la memoria de la tarea, intenta liberar la memoria 
+			//de esa session y explota.
+			//XFREE(a_task); // Free task's memory
+            //Unlock the mutex of this session
+            //pthread_mutex_unlock(mutex);
+        }
+        rc = sem_wait(&got_task);
+        /* and after we return from pthread_cond_wait, the mutex  */
+        /* is locked again, so we don't need to lock it ourselves */
+    }
+	return NULL;
+}
+
+/* Handler ACK responses*/
+/*
+void set_timeout(coap_tick_t *timer, const unsigned int seconds) {
+  coap_ticks(timer);
+  *timer += seconds * COAP_TICKS_PER_SECOND;
+}
+*/
+
+unsigned int print_ipv6_address(char *output, struct in6_addr *v6addr){
+	char 				pv6addr[INET6_ADDRSTRLEN];
+
+	if(inet_ntop(AF_INET6, v6addr, pv6addr, sizeof(pv6addr)) == NULL){
+		puts("inet_ntop(): Error converting IPv6 Source Address to presentation format");
+		return 0;
+	}
+
+	sprintf(output, "coap://[%s]/auth", pv6addr);
+	return 1;
+}
+
+
+
+
+
+void* handle_network_management() {
+    
+    //To handle exit signals
+    signal(SIGINT, signal_handler);
+    signal(SIGQUIT, signal_handler);
+    
+    int radius_sock=0; //Init it to a non-valid value
+    
+    struct sockaddr_in sa;
+    struct sockaddr_in6 sa6;
+    fd_set mreadset; /*master read set*/
+
+    rad_client_init(AS_IP, AS_PORT, AS_SECRET);
+
+    struct radius_client_data *radius_data = get_rad_client_ctx();
+
+    if (radius_data != NULL) {
+		if (IP_VERSION_AUTH==4)
+			radius_sock = radius_data->auth_serv_sock;
+		else if (IP_VERSION_AUTH==6)
+			radius_sock = radius_data->auth_serv_sock6;
+    }
+
+    u8 udp_packet[MAX_DATA_LEN];
+    struct sockaddr_in eap_ll_dst_addr, radius_dst_addr;
+    struct sockaddr_in6 eap_ll_dst_addr6, radius_dst_addr6; //For ipv6 support
+    int addr_size;
+    coap_eap_ctx *new_coap_eap_session=NULL;
+    struct pana_func_parameter *pana_params;
+    struct radius_func_parameter *radius_params;
+    pana *msg;
+    int length;
+	
+    while (!fin) {
+	FD_ZERO(&mreadset);
+	FD_SET(radius_sock, &mreadset);
+        //FD_SET(ctx_server->sockfd, &mreadset);
+	//coap_set_server_fd(list_coap_eap_sessions,&mreadset);
+        int ret = select(FD_SETSIZE, &mreadset, NULL, NULL, NULL);
+        
+        if (ret > 0) {
+
+
+            	
+        }
+    }
+    return NULL;
+}
+
+
+
+/***********************************************/
+
+
+int main(int argc, char* argv[]) {
+
+    // Variables needed to use threads
+    int num_threads = NUM_WORKERS +1; // Workers & network manager
+    int i; //loop counter
+    int thr_id[num_threads]; // thread IDs
+    pthread_t p_threads[num_threads]; // thread's structures
+ 
+    load_config_server();
+
+    char addr_str[NI_MAXHOST] = "aaaa::1";
+//    char addr_str[NI_MAXHOST] = "::1";
+    char port_str_server[NI_MAXSERV] = "5683";
+/*
+    ctx_server=get_context(addr_str,port_str_server);
+    init_resources(ctx_server,hnd_get_auth);
+*/    
+    sem_init(&got_task, 0, 0);
+
+    //Init the lockers
+    pthread_mutex_init(&list_sessions_mutex, NULL);
+    pthread_mutex_init(&list_tasks_mutex, NULL);
+
+    //Init global variables
+    list_alarms_coap_eap = init_alarms_coap();
+
+    /* create the request-handling threads */
+    for (i = 0; i < NUM_WORKERS; i++) {
+        thr_id[i] = i;
+        pthread_create(&p_threads[i], NULL, handle_worker, (void*) &thr_id[i]);
+        pthread_detach(p_threads[i]);
+    }
+    
+  /*  //Create alarm manager thread
+    i+=1;
+    thr_id[i] = i;
+    pthread_create(&p_threads[i], NULL, handle_alarm_coap_management, NULL);
+	
+	//Once the workers are executed, the network manager function starts
+*/
+    handle_network_management();
+    printf("PANA: The server has stopped.\n");
+    return 0;
+}

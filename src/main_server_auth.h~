@@ -1,0 +1,12 @@
+#ifndef MAIN_SERVER_AUTH_H
+#define MAIN_SERVER_AUTH_H
+
+#include "cantcoap-master/nethelper.h"
+#include "cantcoap-master/cantcoap.h"
+#include "cantcoap-master/uthash.h"
+
+void printf_hex(unsigned char *hex, unsigned int l);
+int check_mac(unsigned char *key, unsigned char *mac, CoapPDU *pdu);
+void override_auth_option_pdu(unsigned char *key, CoapPDU *pdu);
+
+#endif

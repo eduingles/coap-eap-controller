@@ -1,0 +1,3 @@
+[submodule "src/cantcoap-master"]
+	path = src/cantcoap-master
+	url = https://dangarcia@bitbucket.org/dangarcia/cantcoap_cpp.git
