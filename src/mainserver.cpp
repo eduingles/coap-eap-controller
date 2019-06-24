@@ -513,7 +513,7 @@ void* process_receive_radius_msg(void* arg) {
 
 
 
-
+/** EDU: Remove to avoid double response
         if(coap_eap_session->eap_workarround == 0){
 
             get_alarm_coap_eap_session(&list_alarms_coap_eap, coap_eap_session->session_id, POST_ALARM);
@@ -521,7 +521,8 @@ void* process_receive_radius_msg(void* arg) {
             mempcpy(eap_req_id, wpabuf_head(packet), wpabuf_len(packet));
 
             // TODO:
-            os_memcpy(coap_eap_session->userID, "alpha.t.eu.org", os_strlen("alpha.t.eu.org"));
+            os_memcpy(coap_eap_session->userID, "alpha.t.eu.org2222", os_strlen("alpha.t.eu.org2222"));
+            pana_debug("EDU: Creating duplicated message\n.");
 
             // Copiamos el ID
             eap_req_id[0] = 0x02;
@@ -537,7 +538,7 @@ void* process_receive_radius_msg(void* arg) {
 
             return;
         }
-
+*/
 
 
 

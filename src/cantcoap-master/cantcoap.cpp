@@ -61,9 +61,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
 CoapPDU::CoapPDU() {
-	// pdu
-	_pdu = (uint8_t*)malloc(500);
-    memset(_pdu, 0, 500);
+	// pdu	//EDU: Change sizeof 500 to 500*uint32_t
+	_pdu = (uint8_t*)malloc(500*sizeof(uint32_t));
+    memset(_pdu, 0, 500*sizeof(uint32_t)); //EDU: Change sizeof
 	_pduLength = 4;
 	_bufferLength = _pduLength;
 
