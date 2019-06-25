@@ -2,7 +2,7 @@
 #define failGracefully exit
 
 // buffers for UDP and URIs
-#define BUF_LEN 500
+#define BUF_LEN 500*4 //EDU: Increased due to the use in "new CoapPDU" to create responses
 #define URI_BUF_LEN 32
 #define MAXBUFLEN 100
 
