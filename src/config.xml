@@ -130,10 +130,12 @@
 
 		<AUTH_SERVER>  <!-- Radius Server information -->
 			<IP_VERSION_AUTH>4</IP_VERSION_AUTH>
-			<AS_IP>127.0.0.1</AS_IP> 
+			<!-- <AS_IP>127.0.0.1</AS_IP> --> 
+			<AS_IP>193.234.219.186</AS_IP> 
 <!--			<AS_IP>172.16.187.226</AS_IP> -->
 			<AS_PORT>1812</AS_PORT>
-			<SHARED_SECRET>testing123</SHARED_SECRET>
+			<!-- <SHARED_SECRET>testing123</SHARED_SECRET> --> <!-- EDU: Password for localhost VMs -->
+			<SHARED_SECRET>noob1234</SHARED_SECRET> <!-- EDU: Password for EAP-NOOB server -->
 		</AUTH_SERVER>
 		
 		<PING_MECHANISM>

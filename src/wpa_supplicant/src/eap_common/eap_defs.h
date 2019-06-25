@@ -63,7 +63,7 @@ typedef enum {
 			   * EAP-HTTP Digest, (funk.com) */,
 	EAP_TYPE_FAST = 43 /* RFC 4851 */,
 	EAP_TYPE_PAX = 46 /* RFC 4746 */,
-	EAP_TYPE_PSK = 47 /* RFC 4764 */,
+	EAP_TYPE_PSK = 90 /* RFC 4764 */,
 	EAP_TYPE_SAKE = 48 /* RFC 4763 */,
 	EAP_TYPE_IKEV2 = 49 /* RFC 5106 */,
 	EAP_TYPE_AKA_PRIME = 50 /* draft-arkko-eap-aka-kdf-10.txt */,

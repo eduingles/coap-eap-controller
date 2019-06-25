@@ -885,10 +885,10 @@ static void eap_sm_parseEapResp(struct eap_sm *sm, const struct wpabuf *resp)
 	hdr = wpabuf_head(resp);
 	plen = be_to_host16(hdr->length);
 	if (plen > wpabuf_len(resp)) {
-		wpa_printf(MSG_DEBUG, "EAP: Ignored truncated EAP-Packet "
+		wpa_printf(MSG_DEBUG, "EAP (eap_server.c): Ignored truncated EAP-Packet "
 			   "(len=%lu plen=%lu)",
 			   (unsigned long) wpabuf_len(resp),
-			   (unsigned long) plen);
+			   (unsigned long) plen); //EDU: DEBUG (eap_server.c)
 		return;
 	}
 

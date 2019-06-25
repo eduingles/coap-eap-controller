@@ -1087,10 +1087,10 @@ static void eap_sm_parseEapReq(struct eap_sm *sm, const struct wpabuf *req)
 	hdr = wpabuf_head(req);
 	plen = be_to_host16(hdr->length);
 	if (plen > wpabuf_len(req)) {
-		wpa_printf(MSG_DEBUG, "EAP: Ignored truncated EAP-Packet "
+		wpa_printf(MSG_DEBUG, "EAP (eap.c): Ignored truncated EAP-Packet "
 			   "(len=%lu plen=%lu)",
 			   (unsigned long) wpabuf_len(req),
-			   (unsigned long) plen);
+			   (unsigned long) plen); //EDU: DEBUG (eap.c)
 		return;
 	}
 
