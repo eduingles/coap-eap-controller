@@ -493,22 +493,15 @@ void* process_receive_radius_msg(void* arg) {
     if ((eap_auth_get_eapFail(eap_ctx) == TRUE)){
         pana_debug("Error: There's an eap fail in RADIUS");
         //exit(0); //EDU: Avoid exit after failure
-        pthread_mutex_unlock(&(coap_eap_session->mutex));
-        remove_alarm_coap_eap(&list_alarms_coap_eap, coap_eap_session->session_id);
-        remove_coap_eap_session(coap_eap_session->session_id);
-        return;
+        //return NULL; // The controller should send the EAP-Failure to the client.
     }
 
-
-
     if ((eap_auth_get_eapReq(eap_ctx) == TRUE) || (eap_auth_get_eapSuccess(eap_ctx) == TRUE)) {
-
 
         pana_debug("There's an eap request in RADIUS");
 		pana_debug("Trying to make a transition with the message from RADIUS");
 
         struct wpabuf * packet = eap_auth_get_eapReqData(&(coap_eap_session->eap_ctx));
-
 
         socklen_t addrLen = sizeof(struct sockaddr_in);
         if((&coap_eap_session->recvAddr)->ss_family==AF_INET6) {
