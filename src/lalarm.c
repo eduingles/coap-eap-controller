@@ -93,9 +93,9 @@ struct lalarm_coap * add_alarm_coap_eap(struct lalarm_coap ** l,
     double tiempo = getTime();
     tiempo += time;
 #if DEBUG
-    printf("TIEMPO ACUTAL: %f\n", tiempo);
+    printf("CURRENT TIME: %f\n", tiempo);
     printf("TIEMPO AL QUE SONARÁ LA ALARMA: %d\n", tiempo);
-    printf("Diferencia: %f\n",time);
+    printf("Difference: %f\n",time);
 #endif
 
     struct lalarm_coap *anterior = *l;
@@ -161,7 +161,7 @@ struct lalarm_coap * add_alarm_coap_eap(struct lalarm_coap ** l,
 
 #if DEBUG
     contadorAlarmas ++;
-    printf("HAY %d ALARMAS PENDIENTES", contadorAlarmas);
+    printf("THERE ARE %d ALARMS PENDING (add_alarm)\n", contadorAlarmas);
 #endif
 
     //Unlock the mutex.
@@ -259,14 +259,14 @@ struct lalarm_coap * get_next_alarm_coap_eap(struct lalarm_coap** list, double t
 		first->sig = NULL;
 
         contadorAlarmas --;
-        printf("HAY %d ALARMAS PENDIENTES", contadorAlarmas);
+        printf("THERE ARE %d ALARMS PENDING\n", contadorAlarmas);
 
         pthread_mutex_unlock(&mutex);
 		return first;
 	}
 	else { //If the first alarm is not activated.
 #ifdef DEBUG
-printf("THE FIRST ALARM DID NOT ACTIVATE \n");
+            printf("THE FIRST ALARM DID NOT ACTIVATE \n");
 #endif
 			pthread_mutex_unlock(&mutex);
 		return NULL;

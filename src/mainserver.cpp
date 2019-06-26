@@ -492,7 +492,11 @@ void* process_receive_radius_msg(void* arg) {
     // In case of a EAP Fail is produced.
     if ((eap_auth_get_eapFail(eap_ctx) == TRUE)){
         pana_debug("Error: There's an eap fail in RADIUS");
-        exit(0);
+        //exit(0); //EDU: Avoid exit after failure
+        pthread_mutex_unlock(&(coap_eap_session->mutex));
+        remove_alarm_coap_eap(&list_alarms_coap_eap, coap_eap_session->session_id);
+        remove_coap_eap_session(coap_eap_session->session_id);
+        return;
     }
 
 
@@ -616,7 +620,7 @@ void* process_receive_radius_msg(void* arg) {
         else{
 				pana_debug("message_id: %d\n",coap_eap_session->message_id);
 				pana_debug("NO Cambio a estado 3 message_id: %d, session_id: %X\n",coap_eap_session->message_id,coap_eap_session->session_id);
-			}
+		}
 
 
 

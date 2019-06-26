@@ -449,7 +449,7 @@ eap_auth_receive_radius(struct radius_msg *msg, struct radius_msg *req,
 	
 	/*********************************************************************************************/
 
-	wpa_printf(MSG_DEBUG, "RADIUS packet matching with station");
+	wpa_printf(MSG_DEBUG, "(eap_auth_interface.c) RADIUS packet matching with station");
 
 	//if (eap_ctx->last_recv_radius != NULL){
 		//radius_msg_free(eap_ctx->last_recv_radius); //fixme: This line must be uncommented?
