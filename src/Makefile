@@ -121,7 +121,7 @@ CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = ${SHELL} /home/student/coap-eap-controller/config/missing --run aclocal-1.11
 AMTAR = $${TAR-tar}
-AM_CFLAGS =   -D WITH_POSIX -g -g -Wall -Wextra -pedantic  -g -Wall -Wextra -pedantic -DAESCRYPTO
+AM_CFLAGS =   -D WITH_POSIX -g -Os -ffunction-sections -fdata-sections  -g -Wall -Wextra -pedantic -DAESCRYPTO
 AM_CPPFLAGS =   -L./state_machines -L./libeapstack -L./libcoap-4.1.1 -I/usr/include/libxml2  -D CONFIGDIR=\"$(sysconfdir)\" ## Sets the \
 	config dir
 AUTOCONF = ${SHELL} /home/student/coap-eap-controller/config/missing --run autoconf

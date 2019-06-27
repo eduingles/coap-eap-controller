@@ -490,8 +490,10 @@ void* process_receive_radius_msg(void* arg) {
     radius_client_receive((struct radius_msg *)radmsg, radius_data, &radius_type);
 
     // In case of a EAP Fail is produced.
+    int eap_failure = 0;
     if ((eap_auth_get_eapFail(eap_ctx) == TRUE)){
         pana_debug("Error: There's an eap fail in RADIUS");
+        eap_failure = 1;
         //exit(0); //EDU: Avoid exit after failure
         //return NULL; // The controller should send the EAP-Failure to the client.
     }
@@ -657,18 +659,22 @@ void* process_receive_radius_msg(void* arg) {
 
 
         storeLastSentMessageInSession(response,coap_eap_session);
+        if (eap_failure != 1) {
+            get_alarm_coap_eap_session(&list_alarms_coap_eap, coap_eap_session->session_id, POST_ALARM);
+            coap_eap_session->RT = coap_eap_session->RT_INIT;
+            coap_eap_session->RTX_COUNTER = 0;
+            add_alarm_coap_eap(&(list_alarms_coap_eap),coap_eap_session,coap_eap_session->RT,POST_ALARM);
 
-        get_alarm_coap_eap_session(&list_alarms_coap_eap, coap_eap_session->session_id, POST_ALARM);
-        coap_eap_session->RT = coap_eap_session->RT_INIT;
-        coap_eap_session->RTX_COUNTER = 0;
-        add_alarm_coap_eap(&(list_alarms_coap_eap),coap_eap_session,coap_eap_session->RT,POST_ALARM);
+            char s[INET6_ADDRSTRLEN];
+    		pana_debug("Alarma añandida:::::::\n  MSGID: %d IP: %s\n", ntohs(response->getMessageID()),
+    				inet_ntop(((coap_eap_session)->recvAddr).ss_family,
+    						get_in_addr((struct sockaddr *)&(coap_eap_session)->recvAddr),
+    						s, sizeof s)
+    		);
+        } else {
+            remove_alarm_coap_eap(&list_alarms_coap_eap, coap_eap_session->session_id);
 
-        char s[INET6_ADDRSTRLEN];
-						pana_debug("Alarma añandida:::::::\n  MSGID: %d IP: %s\n", ntohs(response->getMessageID()),
-								inet_ntop(((coap_eap_session)->recvAddr).ss_family,
-										get_in_addr((struct sockaddr *)&(coap_eap_session)->recvAddr),
-										s, sizeof s)
-						);
+        }
 
 
     }
