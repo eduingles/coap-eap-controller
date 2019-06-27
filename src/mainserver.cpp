@@ -1685,7 +1685,7 @@ void * handle_network_management(void *data) {
 				if (length > 0) 
 				{
 
-          radius_params = XMALLOC(struct radius_func_parameter,1);
+                    radius_params = XMALLOC(struct radius_func_parameter,1);
 
 					struct radius_msg *radmsg = radius_msg_parse(udp_packet, (size_t)length);
 					radius_params->msg = (struct radius_msg *)XMALLOC ( char,length);
@@ -1697,7 +1697,7 @@ void * handle_network_management(void *data) {
 					pana_error("recvfrom returned ret=%d, errno=%d", length, errno);
 
 
-				pana_debug("######## FIN PROCESAMIENTO MENSAJE RADIUS\n"
+				    pana_debug("######## FIN PROCESAMIENTO MENSAJE RADIUS\n"
 						"##\n"
 						"œ\n"
 				);
