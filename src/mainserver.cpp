@@ -556,59 +556,63 @@ void* process_receive_radius_msg(void* arg) {
 
         if (eap_auth_get_eapKeyAvailable(&(coap_eap_session->eap_ctx)))
         {
-            size_t key_len = 0;
-            u8 *key = eap_auth_get_eapKeyData(&(coap_eap_session->eap_ctx),(size_t *)&(coap_eap_session->key_len));
+            coap_eap_session->CURRENT_STATE = 4;
+            successes++;
+            printf("EDU: STATE 4 --> Success!! Total: %d\n",successes);
 
-            //coap_eap_session->msk_key = XCALLOC(u8 , (coap_eap_session->key_len) );
-            coap_eap_session->msk_key = XMALLOC(u8 , (coap_eap_session->key_len) );
+//             size_t key_len = 0;
+//             u8 *key = eap_auth_get_eapKeyData(&(coap_eap_session->eap_ctx),(size_t *)&(coap_eap_session->key_len));
 
-            memcpy(coap_eap_session->msk_key,key,coap_eap_session->key_len);
-            /****This is used for deriving AUTH_KEY****/
-            unsigned int seq_length =
-                    (14*sizeof(unsigned char))+(3*sizeof(unsigned int));
-//(3*sizeof(unsigned int));
+//             //coap_eap_session->msk_key = XCALLOC(u8 , (coap_eap_session->key_len) );
+//             coap_eap_session->msk_key = XMALLOC(u8 , (coap_eap_session->key_len) );
 
-            unsigned char *sequence = XMALLOC(unsigned char, seq_length);
-            unsigned char *ptr = sequence;
+//             memcpy(coap_eap_session->msk_key,key,coap_eap_session->key_len);
+//             /****This is used for deriving AUTH_KEY****/
+//             unsigned int seq_length =
+//                     (14*sizeof(unsigned char))+(3*sizeof(unsigned int));
+// //(3*sizeof(unsigned int));
 
-            coap_eap_session->auth_key = XMALLOC(u8,16);
-            unsigned char label[] ="IETF COAP AUTH";
-            memcpy(ptr,label,sizeof(unsigned char)*14);
-            ptr += 14;
+//             unsigned char *sequence = XMALLOC(unsigned char, seq_length);
+//             unsigned char *ptr = sequence;
+
+//             coap_eap_session->auth_key = XMALLOC(u8,16);
+//             unsigned char label[] ="IETF COAP AUTH";
+//             memcpy(ptr,label,sizeof(unsigned char)*14);
+//             ptr += 14;
 
 
-            memcpy(ptr,&(coap_eap_session->session_id),sizeof(unsigned int));
-            ptr += 4;
+//             memcpy(ptr,&(coap_eap_session->session_id),sizeof(unsigned int));
+//             ptr += 4;
 
-            memcpy(ptr, &(coap_eap_session->nonce_c),sizeof(unsigned int));
+//             memcpy(ptr, &(coap_eap_session->nonce_c),sizeof(unsigned int));
 
-            ptr += 4;
-            memcpy(ptr, &(coap_eap_session->nonce_s),sizeof(unsigned int));
+//             ptr += 4;
+//             memcpy(ptr, &(coap_eap_session->nonce_s),sizeof(unsigned int));
 
-//
-            pana_debug("SEQUENCE: \n");
-            pana_debug_hex(sequence, seq_length);
-//
+// //
+//             pana_debug("SEQUENCE: \n");
+//             pana_debug_hex(sequence, seq_length);
+// //
 
-            do_omac (coap_eap_session->msk_key, sequence, seq_length,
-                      coap_eap_session->auth_key);
-            XFREE(sequence);
-            /*****  END AUTH KEY ****************/
-            coap_eap_session->key_len= (uint16_t)key_len;
-//
-            pana_debug("Key_len = %d",(uint16_t) key_len);
+//             do_omac (coap_eap_session->msk_key, sequence, seq_length,
+//                       coap_eap_session->auth_key);
+//             XFREE(sequence);
+//             /*****  END AUTH KEY ****************/
+//             coap_eap_session->key_len= (uint16_t)key_len;
+// //
+//             pana_debug("Key_len = %d",(uint16_t) key_len);
 
-            pana_debug("AUTH_KEY: \n");
-            pana_debug_hex(coap_eap_session->auth_key,16);
-//
+//             pana_debug("AUTH_KEY: \n");
+//             pana_debug_hex(coap_eap_session->auth_key,16);
+// //
 
-            uint8_t *zero = XMALLOC(uint8_t,16);
-            memset(zero,0,16);
-            response->addOption(CoapPDU::COAP_OPTION_AUTH,16,zero);
+//             uint8_t *zero = XMALLOC(uint8_t,16);
+//             memset(zero,0,16);
+//             response->addOption(CoapPDU::COAP_OPTION_AUTH,16,zero);
 
-            coap_eap_session->CURRENT_STATE = 3;
+//             coap_eap_session->CURRENT_STATE = 3;
 
-            pana_debug("Cambio a estado 3 message_id: %d, session_id: %X\n",coap_eap_session->message_id,coap_eap_session->session_id);
+//             pana_debug("Cambio a estado 3 message_id: %d, session_id: %X\n",coap_eap_session->message_id,coap_eap_session->session_id);
 
         }
 
@@ -1669,6 +1673,7 @@ void * handle_network_management(void *data) {
 
 		if(retSelect>0){
 
+            pana_debug("######## EDU: INFINITE WHILE\n");
 
 			if (FD_ISSET(radius_sock, &mreadset)) 
 			{
@@ -1716,6 +1721,7 @@ void * handle_network_management(void *data) {
 			// CoAP Traffic
 			if(FD_ISSET(global_sockfd,&mreadset)){
 
+                pana_debug("######## EDU: COAP MESSAGE RECEIVED\n");
 
 
 				CoapPDU *recvPDU = new CoapPDU((uint8_t*)buf,BUF_LEN,BUF_LEN);

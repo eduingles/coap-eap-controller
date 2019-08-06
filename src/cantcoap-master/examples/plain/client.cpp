@@ -94,7 +94,7 @@ int main(int argc, char **argv) {
 	INFO("Packet sent");
 
 	// receive packet
-	char buffer[500];
+	char buffer[500]; //EDU: Increased buffer size
 	ret = recv(sockfd,&buffer,500,0);
 	if(ret==-1) {
 		INFO("Error receiving data");
