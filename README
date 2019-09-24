@@ -1,69 +1,7 @@
-OpenPANA is a free implementation of the PANA protocol (RFC 5191).
-It's a multithreading implementation, supported by a framework, which
-allows multiple users to authenticate.
+# CoAP-EAP Controller
+=====================================================
 
-							May 19, 2011
-							Rafa Marín López
-							Pedro Moreno Sánchez
-							Francisco Vidal Meca,
-							Universidad de Murcia
-
- This document describes the OpenPANA software suites.
-
-o DIRECTORIES
-
-  src/ - All the code, certs and example applications including client (openpac) and server (openpaa) and config file.
-  
-  src/wpa_supplicant/ - WPA Supplicant's implementation done by Jouni Malinen ( http://hostap.epitest.fi ) using v0.7.1
-			
-  src/libeapstack/ - Implementation of the wrapper done from EAP library by Rafa Marín López
-  
-  src/state_machines/ - Code implementing the conceptual state machines for PANA (RFC 5609)  
-
-  doxyfiles/ - Files needed for generating the documentation.
-
-o What is the OpenPANA?
-
- OpenPANA consists of free libraries and sample applications for PANA
- message exchange. 
-
-o STANDARD REFERENCES
-
- Currently, OpenPANA supports the following specifications, but does not
- cover all details of them.
-
-  PANA
-    RFC5191 - "Protocol for Carrying Authentication for Network Access
-             (PANA)"
-    RFC5193 - "Protocol for Carrying Authentication for Network Access
-             (PANA) Framework"
-    RFC5609 - "State Machines for the Protocol for Carrying
-              Authentication for Network Access (PANA)"
-	RFC6345 - "Protocol for Carrying Authentication for Network Access
-			 (PANA) Relay Element"
-        
-
-  EAP
-    RFC3748 - "Extensible Authentication Protocol (EAP)"
-    RFC4137 - "State Machines for EAP Peer and Authenticator"
-
-  EAP-TLS
-	RFC5216 - "The EAP-TLS Authentication Protocol"
-
-  EAP-PSK
-	RFC4764 - "The EAP-PSK Protocol: A Pre-Shared Key Extensible Authentication Protocol (EAP) Method"
-
-o Install
-
- 1. OpenPANA requires the following libraries:
-
-  - OpennSSL library
-    http://wwww.openssl.org
-
-  - Libxml2
-    http://xmlsoft.org/
-
- 2. Configuring OpenPANA:
+ 2. Configuring CoAP-EAP Controller:
 
     Default settings can be changed by modifying the config.xml file found in ./src and /etc/openpana when installed.
     * Common Settings:
@@ -109,7 +47,7 @@ o Install
 	- IP where PAA is listening to incoming messages <IP_PAA>
 	- Port where PAA is listening to incoming messages <PORT_PAA>
 
- 3. Building the OpenPANA softwares:
+ 3. Building the CoAP-EAP Controller softwares:
 
   You can just run the './configure --sysconfdir=/etc/openpana' script and 'make'.
   If the --sysconfdir option is not added, configuration files will be placed under the '/usr/local/etc' directory.
@@ -120,8 +58,8 @@ o Install
 
   You can also run the '--enable-relay' configure option in order to get the PRE functionality integrated within the PaC entity.
   
- 4. OpenPANA will need a working installation of a Radius Server using EAP-TLS method.
-    OpenPANA will require the following certificate files in config folder or in the current directory:
+ 4. CoAP-EAP Controller will need a working installation of a Radius Server using EAP-TLS method.
+    CoAP-EAP Controller will require the following certificate files in config folder or in the current directory:
     	- ca.pem 
     	- client.pem
     	- client.pk8 (Can be obtained from client.key using: openssl pkcs8 -topk8 -in client.key -out client.pk8 -nocrypt )
@@ -130,43 +68,27 @@ o Install
    
  5. After all you have 'openpaa', 'openpre' and 'openpac' in the ./src application's folder.
  
- 6. By running 'make install' as root OpenPANA will be installed tipically under '/usr/local/bin' and configuration files 
+ 6. By running 'make install' as root CoAP-EAP Controller will be installed tipically under '/usr/local/bin' and configuration files 
     will be placed in '/etc/openpana'.
 
     In order to produce an executable much smaller and faster, the application can be installed by the command 'make install-strip'.
 
-* OpenPANA can be uninstalled by the 'make uninstall' command.
-
 o Contact Points
-
-  Information about OpenPANA available at the project's web site:
-
-  http://openpana.sf.net
 
  Documentation can be generated with doxygen building with: 'make doxygen-doc' and it will be generated in html and pdf format.
 
- If you have any questions about OpenPANA, you can ask to the mailing
- list: openapana-users@list.sourceforge.net
-
- Or mailto: f.vidalmeca@um.es , p.morenosanchez@um.es or rafa@um.es
+ If you have any questions about CoAP-EAP Controller, you can mail to: rafa@um.es, dan.garcia@um.es, eduardo.ingles@um.es
 
 o  License 
 
  Basically this software suites follows the GNU GPL v3 license.
  In short, the code is freely available but with no warranty.
 
-o Initial Authors
+o Authors
 
-	Rafa Marín López <rafa@um.es>		         - Universidad de Murcia
-	Pedro Moreno Sánchez <p.morenosanchez@um.es> - Universidad de Murcia
-	Francisco Vidal Meca <f.vidalmeca@um.es>     - Universidad de Murcia
-
-
-o Acknowledgments
-
- Yoshihiro Ohba  - Toshiba
- Jouni Malinen   - Hostapd implementation
- Ibán Morote     - OpenPANA Logo http://cargocollective.com/ibanmorote
- Alejandro Pérez - Bugfixes
-
+	Rafa Marín López <rafa@um.es>		      - Universidad de Murcia
+	Pedro Moreno Sánchez <p.morenosanchez@um.es>  - Universidad de Murcia
+	Francisco Vidal Meca <f.vidalmeca@um.es>      - Universidad de Murcia
+	Dan García Carrillo <dan.garcia@um.es>        - Universidad de Murcia
+	Eduardo Inglés Sánchez <eduardo.ingles@um.es> - Universidad de Murcia
 
